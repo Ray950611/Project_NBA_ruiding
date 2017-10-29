@@ -120,7 +120,7 @@ def season_predict():
         PERAvg_train = np.array(PERAvg_train).reshape((30,1))
         Wins_train = np.array(Wins_train).reshape((30,1))
         #new inquiry
-        #regular season data wrapping
+        #regular season data scraping
         advanced_test = 'http://www.basketball-reference.com/leagues/NBA_'+str(season_input)+'_advanced.html'
 
         req = requests.get(advanced_test)
@@ -128,8 +128,6 @@ def season_predict():
         text = BeautifulSoup(req.text, 'html.parser')
         stats = text.find('div',{'id': 'all_advanced_stats'})
 
-        #print cols
-        # get rows
         PERAvg = np.zeros(30)
         GP = np.zeros(30)
         Min = np.zeros(30)
@@ -218,7 +216,7 @@ def game_predict():
         ###initialization
         TeamFull = ['San Antonio Spurs', 'Golden State Warriors', 'Oklahoma City Thunder', 'Cleveland Cavaliers', 'Toronto Raptors', 'Los Angeles Clippers', 'Atlanta Hawks', 'Boston Celtics', 'Charlotte Hornets', 'Utah Jazz', 'Indiana Pacers', 'Miami Heat', 'Portland Trail Blazers', 'Detroit Pistons', 'Houston Rockets', 'Dallas Mavericks', 'Washington Wizards', 'Chicago Bulls', 'Orlando Magic', 'Memphis Grizzlies', 'Sacramento Kings', 'Denver Nuggets', 'New York Knicks', 'New Orleans Pelicans', 'Minnesota Timberwolves', 'Milwaukee Bucks', 'Phoenix Suns', 'Brooklyn Nets', 'Los Angeles Lakers', 'Philadelphia 76ers']
         Teams = ['SAS','GSW','OKC','CLE','TOR','LAC','ATL','BOS','CHO','UTA','IND','MIA','POR','DET','HOU','DAL','WAS','CHI','ORL','MEM','SAC','DEN','NYK','NOP','MIN','MIL','PHO','BRK','LAL','PHI']
-        #regular season data wrapping
+        #regular season data scraping
         if guest_team not in Teams or home_team not in Teams:
             Result = "Error input team name!"
             template = "<!doctype html><html><body><div align='center' style='border:2px solid red'><h1>"+Result+"</h1>"+"<form action='/game/'><input type='submit' value='Back'></form></div></body></html>"
@@ -237,8 +235,6 @@ def game_predict():
         PERAvg = np.zeros(30)
         GP = np.zeros(30)
         Min = np.zeros(30)
-
-        # get rows
 
         for i in stats.tbody.find_all('tr'):
             row = [j.get_text() for j in i.find_all('td')]
@@ -293,8 +289,6 @@ def game_predict():
 
         text = BeautifulSoup(req.text, 'html.parser')
         stats = text.find('div',{'id': 'all_advanced_stats'})
-
-        # get rows
 
         PERAvg_test = np.zeros(30)
         GP = np.zeros(30)
