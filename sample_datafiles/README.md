@@ -7,18 +7,20 @@ Other data used such as per game results data is not stored here.
 The sample data are a small fraction of a potential larger data set to be analyzed. In particular, if the training dataset
 is expanded to include more past seasonal results then the data size can be easily mutiplied by a factor of 10 to 20.
 All data are scraped from basketball-reference.com, this includes but not limited to the following:
-2016-2017 player advanced stats:
+2016-2017 season player advanced stats:
 https://www.basketball-reference.com/leagues/NBA_2017_advanced.html
-2015-2016 player advanced stats:
+2015-2016 season player advanced stats:
 https://www.basketball-reference.com/leagues/NBA_2016_advanced.html
 (older seasonal advanced stats likewise)
 
-regular season game results 2016-2017 January:
+Regular season game results by month, for example 2016-2017 season January:
 https://www.basketball-reference.com/leagues/NBA_2017_games-january.html
-(And all other months where regular season games took place likewise)
+(and all other months where regular season games took place likewise)
 
-Team ratings 2016-2017:
+Team ratings 2016-2017 season:
 https://www.basketball-reference.com/leagues/NBA_2017_ratings.html
 (and previous season's ratings likewise)
 
-
+Individual team schedules and results, for example for Boston Celtics 2016-2017 season:
+https://www.basketball-reference.com/teams/BOS/2017_games.html
+(and all other teams for all previous seasons likewise)
