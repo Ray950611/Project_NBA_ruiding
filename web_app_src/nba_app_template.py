@@ -12,9 +12,10 @@ app = Flask(__name__)
 
 @app.route("/")
 def nba():
-    template = "<!doctype html><html><body><title>NBA Predictor</title><div align='center' style='border:3px solid red'><h1>############Welcome to My NBA Predictor!############</h1><img src='/static/nba-logo-on-wood.jpg' alt='NBA Logo'style='width:474px;height:268px;''>"
+    template = "<!doctype html><html><body><title>NBA Predictor</title><div align='center' style='border:3px solid red'><h1>Welcome to My NBA Predictor!</h1><img src='/static/nba-logo-on-wood.jpg' alt='NBA Logo'style='width:474px;height:268px;''>"
     template+= "<FORM METHOD='LINK' ACTION='/game/'><INPUT style='width: 400px; padding: 36px; cursor: pointer; box-shadow: 6px 6px 5px; #999; -webkit-box-shadow: 6px 6px 5px #999; -moz-box-shadow: 6px 6px 5px #999; font-weight: bold; background: #ffff00; color: #000; border-radius: 10px; border: 1px solid #999; font-size: 180%;' TYPE='submit' VALUE='Game Prediction'></FORM>"
     template+= "<FORM METHOD='LINK' ACTION='/season/'><INPUT style='width: 400px; padding: 36px; cursor: pointer; box-shadow: 6px 6px 5px; #999; -webkit-box-shadow: 6px 6px 5px #999; -moz-box-shadow: 6px 6px 5px #999; font-weight: bold; background: #ffff00; color: #000; border-radius: 10px; border: 1px solid #999; font-size: 180%;' TYPE='submit' VALUE='Season Prediction'></FORM>"
+    template+= "<FORM METHOD='LINK' ACTION='/contract/'><INPUT style='width: 400px; padding: 36px; cursor: pointer; box-shadow: 6px 6px 5px; #999; -webkit-box-shadow: 6px 6px 5px #999; -moz-box-shadow: 6px 6px 5px #999; font-weight: bold; background: #ffff00; color: #000; border-radius: 10px; border: 1px solid #999; font-size: 180%;' TYPE='submit' VALUE='Contract Prediction'></FORM>"
     template+= "<h3> Web App by Rui Ding</h3></div></body></html>"
     return template
 @app.route('/season/')
@@ -120,7 +121,7 @@ def season_predict():
         PERAvg_train = np.array(PERAvg_train).reshape((30,1))
         Wins_train = np.array(Wins_train).reshape((30,1))
         #new inquiry
-        #regular season data scraping
+        #regular season data wrapping
         advanced_test = 'http://www.basketball-reference.com/leagues/NBA_'+str(season_input)+'_advanced.html'
 
         req = requests.get(advanced_test)
@@ -128,6 +129,8 @@ def season_predict():
         text = BeautifulSoup(req.text, 'html.parser')
         stats = text.find('div',{'id': 'all_advanced_stats'})
 
+        #print cols
+        # get rows
         PERAvg = np.zeros(30)
         GP = np.zeros(30)
         Min = np.zeros(30)
@@ -174,6 +177,101 @@ def season_predict():
         return template
 
     ###########
+@app.route("/contract/")
+def form_contract():
+   #Teams = ['SAS','GSW','OKC','CLE','TOR','LAC','ATL','BOS','CHO','UTA','IND','MIA','POR','DET','HOU','DAL','WAS','CHI','ORL','MEM','SAC','DEN','NYK','NOP','MIN','MIL','PHO','BRK','LAL','PHI']
+   template = "<!doctype html><html><body><title>NBA Contract Predictor</title><div align='center' style='border:2px solid red'><h1>Welcome to My NBA Contract Predictor!</h1>"
+   template += "<form action='/contract_result/' method='post'> Player Name(LeBron James):<br><input type='text' name='player'><br> Season(current season 2018):<br><input type='text' name='season'><br><br><input type='submit' value='Submit'></form>"
+   template+= "</div></body></html>"
+   return template
+@app.route("/contract_result/",methods=['POST'])
+def player_contract():
+    player_name = request.form['player']
+    currentYear = int(datetime.now().year)
+    currentMonth = int(datetime.now().month)
+    if currentMonth>=11:
+        cur_season = currentYear+1
+    else:
+        cur_season = currentYear
+    season_input = request.form['season']
+    if season_input=='':
+            Result = "Null Season Input!"
+            template = "<!doctype html><html><body><div align='center' style='border:2px solid red'><h1>"+Result+"</h1>"+"<form action='/contract/'><input type='submit' value='Back'></form></div></body></html>"
+            return template
+
+    season_input = int(season_input)
+    if season_input>cur_season:
+        Result="Error season input!Not valid for app use."
+        template = "<!doctype html><html><body><div align='center' style='border:2px solid red'><h1>"+Result+"</h1>"+"<form action='/contract/'><input type='submit' value='Back'></form></div></body></html>"
+        return template
+    advanced_train = 'http://www.basketball-reference.com/leagues/NBA_'+str(season_input)+'_advanced.html'
+    req = requests.get(advanced_train)
+    text = BeautifulSoup(req.text, 'html.parser')
+    stats = text.find('div',{'id': 'all_advanced_stats'})
+    data = {}
+    pics = {}
+    Pos = ['PG','SG','SF','PF','C']
+    for i in stats.tbody.find_all('tr'):
+        src = i.find('a')
+        source = 'https://www.basketball-reference.com/'+str(src)[str(src).find('"/')+2:str(src).find('">')]
+        row = [j.get_text() for j in i.find_all('td')]
+
+        if len(row)==0:
+            continue
+        pos_str = row[1]
+        if len(pos_str)>2:
+            pos_str = pos_str[0:2]
+        pos = Pos.index(pos_str)
+        mins = row[5]
+        gp = row[4]
+        mp = float(mins)/float(gp)
+        age = int(row[2])
+        vet = int(age>=35)
+        roo = int(age<=25)
+        if mp > 6.0 and age>24:
+            name = str(row[0])
+            per = float(row[6])
+            wS = float(row[21])
+            if name not in data.keys() and per>=0 and wS>=0:
+                pics.update({name:source})
+                data.update({name:[pos,mp,per,per**2,wS,wS/mp,mp*per,vet,roo,age]})
+    if player_name not in data.keys():
+        Result="Error player input!Not valid for app use."
+        template = "<!doctype html><html><body><div align='center' style='border:2px solid red'><h1>"+Result+"</h1>"+"<form action='/game/'><input type='submit' value='Back'></form></div></body></html>"
+        return template
+    pos = data[player_name][0]
+    cur_data = np.array(data[player_name])[2:-1]
+    cap = requests.get('http://www.spotrac.com/nba/cap/'+str(season_input-1)+'/')
+    soup= BeautifulSoup(cap.text,"html.parser")
+    table = soup.find('div',{'id':'main','class':' xlarge'}).find()
+    sal_cap = str(table)[int(str(table).find('$')+1):int(str(table).find('<br>'))]
+    cap_value = float(sal_cap.replace(',',''))/10000
+    result=0
+    if pos==0:
+        ratio = sum(np.array([-2.86454423e-03,4.14034491e-05,-9.07207290e-03,-1.12262689e-02,4.23167963e-04,1.65886132e-02,2.64861425e-03])*np.array(cur_data))-0.0101158631893
+        result = int(cap_value*ratio)
+    elif pos==1:
+        ratio = sum(np.array([-0.00943353,0.0002102,-0.0073279,-0.10713382,0.00044907,0.01515629,-0.00880964])*np.array(cur_data))+0.0547997091894
+        result = int(cap_value*ratio)
+    elif pos==2:
+        ratio = sum(np.array([-0.01703841,0.00033867,-0.01779424,0.18171129,0.00059632,-0.00554223,-0.02514712])*np.array(cur_data))+0.0918636173954
+        result = int(cap_value*ratio)
+    elif pos==3:
+        ratio = sum(np.array([-2.52831857e-03,1.24339772e-04,9.20500442e-03,-3.59426220e-01,2.95553808e-04,-4.87055235e-04,-3.57743233e-02])*np.array(cur_data))+0.0310443896457
+        result = int(cap_value*ratio)
+    elif pos==4:
+        ratio = sum(np.array([-3.33790307e-03,-7.17050308e-05,-9.76902993e-04,-1.23492664e-01,4.52538762e-04,-3.33770045e-02,-5.21154803e-02])*np.array(cur_data))+0.0518193122728
+        result = int(cap_value*ratio)
+    Result = Pos[pos]+" "+player_name+" : $"+str(result*10000)
+    p_im = requests.get(pics[player_name])
+    img= BeautifulSoup(p_im.text,"html.parser")
+    image = img.find('div',{'class':'players','id':'info'}).find('div',{'class':'media-item'}).find('img')
+    plink = str(image)[str(image).find('http'):str(image).find('">')]
+#print str(table)[(str(table).find('src="')+5):str(table).find('"/')]
+    template = "<!doctype html><html><body><title>Contract Prediction</title><div align='center' style='border:2px solid red'>"
+    template+="<img src='"+plink+"' alt='Headshot'>"
+    template+= "<h1>"+Result+"</h1><form action='/'><input type='submit' value='Home'></form></div></body></html>"
+    return template
 @app.route("/game/")
 def form_game():
    Teams = ['SAS','GSW','OKC','CLE','TOR','LAC','ATL','BOS','CHO','UTA','IND','MIA','POR','DET','HOU','DAL','WAS','CHI','ORL','MEM','SAC','DEN','NYK','NOP','MIN','MIL','PHO','BRK','LAL','PHI']
@@ -216,8 +314,8 @@ def game_predict():
         ###initialization
         TeamFull = ['San Antonio Spurs', 'Golden State Warriors', 'Oklahoma City Thunder', 'Cleveland Cavaliers', 'Toronto Raptors', 'Los Angeles Clippers', 'Atlanta Hawks', 'Boston Celtics', 'Charlotte Hornets', 'Utah Jazz', 'Indiana Pacers', 'Miami Heat', 'Portland Trail Blazers', 'Detroit Pistons', 'Houston Rockets', 'Dallas Mavericks', 'Washington Wizards', 'Chicago Bulls', 'Orlando Magic', 'Memphis Grizzlies', 'Sacramento Kings', 'Denver Nuggets', 'New York Knicks', 'New Orleans Pelicans', 'Minnesota Timberwolves', 'Milwaukee Bucks', 'Phoenix Suns', 'Brooklyn Nets', 'Los Angeles Lakers', 'Philadelphia 76ers']
         Teams = ['SAS','GSW','OKC','CLE','TOR','LAC','ATL','BOS','CHO','UTA','IND','MIA','POR','DET','HOU','DAL','WAS','CHI','ORL','MEM','SAC','DEN','NYK','NOP','MIN','MIL','PHO','BRK','LAL','PHI']
-        #regular season data scraping
-        if guest_team not in Teams or home_team not in Teams:
+        #regular season data wrapping
+        if guest_team not in Teams or home_team not in Teams or home_team==guest_team:
             Result = "Error input team name!"
             template = "<!doctype html><html><body><div align='center' style='border:2px solid red'><h1>"+Result+"</h1>"+"<form action='/game/'><input type='submit' value='Back'></form></div></body></html>"
             return template
@@ -235,6 +333,8 @@ def game_predict():
         PERAvg = np.zeros(30)
         GP = np.zeros(30)
         Min = np.zeros(30)
+
+        # get rows
 
         for i in stats.tbody.find_all('tr'):
             row = [j.get_text() for j in i.find_all('td')]
@@ -289,6 +389,8 @@ def game_predict():
 
         text = BeautifulSoup(req.text, 'html.parser')
         stats = text.find('div',{'id': 'all_advanced_stats'})
+
+        # get rows
 
         PERAvg_test = np.zeros(30)
         GP = np.zeros(30)
