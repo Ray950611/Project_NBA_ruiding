@@ -435,7 +435,28 @@ def game_predict():
         Result+= "Homwteam Win Probability:"+str(prob)
         image = "<img src='/static/logos/"+home_team+".jpg' alt='Home Logo'style='width:200px;height:200px;''> <h1>vs.</h1> <img src='/static/logos/"+guest_team+".jpg' alt='Guest Logo'style='width:200px;height:200px;'>"
         result = "<h1>"+Result+"</h1>"
-        return render_template('game_result.html',image=image,result=result)
+        ###plot momentum
+        import matplotlib.pyplot as plt, mpld3
+        h_m = []
+        g_m = []
+        for i in range(1,len(records_home)+1):
+            cur = records_home[0:i]
+            cur_m = calc_momentum(cur)
+            h_m.append(cur_m)
+        for i in range(1,len(records_guest)+1):
+            cur = records_guest[0:i]
+            cur_m = calc_momentum(cur)
+            g_m.append(cur_m)
+        fig = plt.figure()
+        plt.plot(range(1,len(records_home)+1),h_m,'ro-',label=home_team)
+        plt.plot(range(1,len(records_guest)+1),g_m,'bo-',label=guest_team)
+        plt.legend()
+        plt.xlabel('Game')
+        plt.ylabel('Momentum')
+        plt.ylim((-10.5,10.5))
+        plt.title('Comparison of Team Momentums')
+        p = mpld3.fig_to_html(fig)
+        return render_template('game_result.html',image=image,result=result,plot=p)
 
 
 
